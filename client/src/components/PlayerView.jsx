@@ -72,7 +72,7 @@ function PlayerView() {
       players.forEach((p) => { rosterRef.current[p.id] = p.name; });
     });
 
-    socket.on('ROUND_STARTED', ({ roundNumber, alivePlayers }) => {
+        socket.on('ROUND_STARTED', ({ roundNumber, alivePlayers }) => {
       clearTimeout(revealTimeoutRef.current);
       roundNumberRef.current = roundNumber;
       setRoundNumber(roundNumber);
@@ -82,8 +82,17 @@ function PlayerView() {
       setRevealPhase('IDLE');
       setRevealedInfo(null);
       alivePlayers.forEach((p) => { rosterRef.current[p.id] = p.name; });
-    });
 
+      // Load-test convenience: in test mode, auto-vote for a random alive player
+      // after a random short delay, so a 15-tab test runs itself with no manual clicking.
+      if (isTestMode() && alivePlayers.length > 0) {
+        const randomTarget = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+        const delay = 1000 + Math.random() * 4000;
+        setTimeout(() => {
+          socket.emit('CAST_VOTE', { targetId: randomTarget.id });
+        }, delay);
+      }
+    });
     socket.on('VOTE_ACCEPTED', () => setHasVoted(true));
 
     socket.on('ROUND_RESULT', ({ eliminatedId, reason, remainingPlayers }) => {
