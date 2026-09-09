@@ -21,7 +21,7 @@ app.use(express.static(path.join(__dirname, '../client/dist')));
 app.get('/api/health', (req, res) => res.send('Elimination Game server is running.'));
 
 // Any non-API route falls back to the React app, so /host and /player work on refresh
-app.get('*', (req, res) => {
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../client/dist/index.html'));
 });
 
