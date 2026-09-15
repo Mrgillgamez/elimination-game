@@ -7,8 +7,8 @@ import HostTopBar from './HostTopBar';
 import Confetti from './Confetti';
 import './HostView.css';
 
-const REVEAL_PAUSE_MS = 3000;        // suspense before an elimination/tie name appears
-const WINNER_REVEAL_PAUSE_MS = 3000; // suspense before the final winner's name appears
+const REVEAL_PAUSE_MS = 3000;
+const WINNER_REVEAL_PAUSE_MS = 3000;
 
 function HostView() {
   const { loading: authLoading, allowed, reason } = useRequireActiveAccount();
@@ -23,10 +23,10 @@ function HostView() {
   const [votingEndsAt, setVotingEndsAt] = useState(null);
   const [secondsLeft, setSecondsLeft] = useState(0);
 
-  const [viewPhase, setViewPhase] = useState('VOTING'); // VOTING | REVEALING | REVEALED | FINAL_TWO
+  const [viewPhase, setViewPhase] = useState('VOTING');
   const [revealedResult, setRevealedResult] = useState(null);
   const [gameEnded, setGameEnded] = useState(null);
-  const [winnerPhase, setWinnerPhase] = useState(null); // null | CROWNING | REVEALED
+  const [winnerPhase, setWinnerPhase] = useState(null);
   const [finalTwoPlayers, setFinalTwoPlayers] = useState(null);
 
   const revealTimeoutRef = useRef(null);
@@ -86,6 +86,7 @@ function HostView() {
       stopSound(activeSoundRef.current);
       setGameEnded(winnerId);
       setWinnerPhase('CROWNING');
+      sessionStorage.removeItem('hostRoomCode'); // game is over - don't auto-rejoin it later
       activeSoundRef.current = playSound('drumroll', { volume: 0.8 });
       revealTimeoutRef.current = setTimeout(() => {
         stopSound(activeSoundRef.current);
@@ -136,6 +137,11 @@ function HostView() {
   const createGame = () => socket.emit('CREATE_GAME');
   const startGame = () => socket.emit('START_GAME');
 
+  const startNewGame = () => {
+    sessionStorage.removeItem('hostRoomCode');
+    window.location.href = '/host';
+  };
+
   if (authLoading) {
     return <div style={{ padding: 40, color: '#fff', background: '#0b0b0f', minHeight: '100vh' }}>Loading...</div>;
   }
@@ -148,7 +154,7 @@ function HostView() {
   if (!roomCode) {
     return (
       <div className="host-container">
-      <HostTopBar />
+        <HostTopBar />
         <h1>Host a Game</h1>
         <button className="host-start-btn" onClick={createGame}>Create Game</button>
       </div>
@@ -166,7 +172,7 @@ function HostView() {
           {isRevealed ? (
             <div className="host-winner-name">{winner || 'Game Over'}</div>
           ) : (
-            <div className="host-reveal-pause">🥁 🥁 🥁</div>
+            <div className="host-reveal-pause">Drumroll...</div>
           )}
         </div>
       </div>
@@ -201,7 +207,7 @@ function HostView() {
                 <div className="host-eliminated-label">eliminated</div>
               </>
             ) : (
-              <div className="host-tie-message">It's a tie — no elimination</div>
+              <div className="host-tie-message">It's a tie - no elimination</div>
             )}
             <div className="host-remaining" style={{ marginTop: '1.5rem' }}>
               Players remaining: {alivePlayers.length}
@@ -238,6 +244,12 @@ function HostView() {
         {players.map((p) => <li key={p.id}>{p.name}</li>)}
       </ul>
       <button className="host-start-btn" onClick={startGame} disabled={!canStart}>Start Game</button>
+      <button
+        onClick={startNewGame}
+        style={{ marginTop: '1rem', background: 'none', border: 'none', color: '#888', textDecoration: 'underline', cursor: 'pointer', fontSize: '0.85rem' }}
+      >
+        Abandon this room and start a new game
+      </button>
     </div>
   );
 }
