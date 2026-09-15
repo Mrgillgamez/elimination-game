@@ -1,0 +1,45 @@
+﻿:root {
+  --void: #120E16;
+  --surface: #1E1720;
+  --surface-raised: #271E2B;
+
+  --danger: #E23B4D;
+  --alive: #2FBF87;
+  --warning: #F2A93B;
+  --victory: #E8B93E;
+
+  --ink: #F5F1F0;
+  --ink-muted: #9C8FA0;
+
+  --border: #332A38;
+
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 2px;
+  --radius-md: 4px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--void);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+a {
+  color: inherit;
+}

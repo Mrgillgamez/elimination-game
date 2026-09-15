@@ -1,0 +1,38 @@
+﻿.host-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-4) var(--space-5);
+  box-sizing: border-box;
+  font-size: 0.85rem;
+  font-family: var(--font-body);
+}
+
+.host-topbar-links a {
+  color: var(--ink-muted);
+  text-decoration: none;
+  margin-right: var(--space-4);
+  border-bottom: 1px solid transparent;
+}
+
+.host-topbar-links a:hover { border-bottom-color: var(--ink-muted); }
+
+.host-topbar-logout {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--ink-muted);
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.host-topbar-logout:hover {
+  border-color: var(--victory);
+  color: var(--victory);
+}

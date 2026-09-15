@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { socket } from '../socket';
 import { playSound, stopSound, playCountdownNumber } from '../sounds';
+import { useRequireActiveAccount } from '../hooks/useRequireActiveAccount';
+import HostTopBar from './HostTopBar';
 import Confetti from './Confetti';
 import './HostView.css';
 
@@ -9,6 +11,8 @@ const REVEAL_PAUSE_MS = 3000;        // suspense before an elimination/tie name 
 const WINNER_REVEAL_PAUSE_MS = 3000; // suspense before the final winner's name appears
 
 function HostView() {
+  const { loading: authLoading, allowed, reason } = useRequireActiveAccount();
+
   const [roomCode, setRoomCode] = useState(null);
   const [players, setPlayers] = useState([]);
   const [canStart, setCanStart] = useState(false);
@@ -132,9 +136,19 @@ function HostView() {
   const createGame = () => socket.emit('CREATE_GAME');
   const startGame = () => socket.emit('START_GAME');
 
+  if (authLoading) {
+    return <div style={{ padding: 40, color: '#fff', background: '#0b0b0f', minHeight: '100vh' }}>Loading...</div>;
+  }
+
+  if (!allowed) {
+    window.location.href = reason === 'TRIAL_EXPIRED' ? '/upgrade' : '/login';
+    return null;
+  }
+
   if (!roomCode) {
     return (
       <div className="host-container">
+      <HostTopBar />
         <h1>Host a Game</h1>
         <button className="host-start-btn" onClick={createGame}>Create Game</button>
       </div>
@@ -216,6 +230,7 @@ function HostView() {
   const joinUrl = `${window.location.origin}/player?code=${roomCode}`;
   return (
     <div className="host-container">
+      <HostTopBar />
       <div className="host-room-code">{roomCode}</div>
       <div className="host-qr-wrap"><QRCodeSVG value={joinUrl} size={180} /></div>
       <div className="host-remaining">Players joined: {players.length} / 15 (need at least 10)</div>
