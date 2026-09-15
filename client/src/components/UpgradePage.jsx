@@ -32,7 +32,7 @@ function UpgradePage() {
         </button>
 
         <p className="auth-switch">
-          Questions? <a href="mailto:YOUR_EMAIL_HERE">Contact support</a>
+          Questions? <a href="mailto:iamsharann1@gmail.com">Contact support</a>
         </p>
       </div>
     </div>
