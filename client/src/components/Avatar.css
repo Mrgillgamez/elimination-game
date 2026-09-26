@@ -1,0 +1,35 @@
+.avatar {
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display, inherit);
+  color: #ffffff;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.avatar-small {
+  width: 32px;
+  height: 32px;
+  font-size: 0.9rem;
+}
+
+.avatar-medium {
+  width: 56px;
+  height: 56px;
+  font-size: 1.3rem;
+}
+
+.avatar-large {
+  width: 88px;
+  height: 88px;
+  font-size: 2rem;
+}
+
+.avatar-fluid {
+  width: clamp(34px, 9vh, 64px);
+  height: clamp(34px, 9vh, 64px);
+  font-size: clamp(0.85rem, 3.2vh, 1.4rem);
+}

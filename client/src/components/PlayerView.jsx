@@ -2,10 +2,12 @@ import { useEffect, useState, useRef } from 'react';
 import { socket } from '../socket';
 import { playSound } from '../sounds';
 import Confetti from './Confetti';
+import Avatar from './Avatar';
+import { getAvatarColor } from '../avatar';
 import './PlayerView.css';
 
-const REVEAL_PAUSE_MS = 3000;        // must match HostView.jsx's REVEAL_PAUSE_MS
-const WINNER_REVEAL_PAUSE_MS = 3000; // must match HostView.jsx's WINNER_REVEAL_PAUSE_MS
+const REVEAL_PAUSE_MS = 3000;
+const WINNER_REVEAL_PAUSE_MS = 3000;
 
 function getCodeFromUrl() {
   const params = new URLSearchParams(window.location.search);
@@ -38,19 +40,20 @@ function PlayerView() {
   const [isEliminated, setIsEliminated] = useState(false);
   const [eliminatedInRound, setEliminatedInRound] = useState(null);
 
-  const [revealPhase, setRevealPhase] = useState('IDLE'); // IDLE | REVEALING | REVEALED
+  const [revealPhase, setRevealPhase] = useState('IDLE');
   const [revealedInfo, setRevealedInfo] = useState(null);
 
   const [finalTwo, setFinalTwo] = useState(false);
   const [finalTwoSecondsLeft, setFinalTwoSecondsLeft] = useState(null);
 
   const [winnerId, setWinnerId] = useState(null);
-  const [winnerPhase, setWinnerPhase] = useState(null); // null | CROWNING | REVEALED
+  const [winnerPhase, setWinnerPhase] = useState(null);
 
   const rosterRef = useRef({});
   const roundNumberRef = useRef(0);
   const revealTimeoutRef = useRef(null);
   const winnerTimeoutRef = useRef(null);
+  const iWasEliminatedThisRoundRef = useRef(false);
 
   useEffect(() => {
     if (isTestMode() && roomCode && name) {
@@ -72,9 +75,10 @@ function PlayerView() {
       players.forEach((p) => { rosterRef.current[p.id] = p.name; });
     });
 
-        socket.on('ROUND_STARTED', ({ roundNumber, alivePlayers }) => {
+    socket.on('ROUND_STARTED', ({ roundNumber, alivePlayers }) => {
       clearTimeout(revealTimeoutRef.current);
       roundNumberRef.current = roundNumber;
+      iWasEliminatedThisRoundRef.current = false;
       setRoundNumber(roundNumber);
       setAlivePlayers(alivePlayers);
       setHasVoted(false);
@@ -83,8 +87,6 @@ function PlayerView() {
       setRevealedInfo(null);
       alivePlayers.forEach((p) => { rosterRef.current[p.id] = p.name; });
 
-      // Load-test convenience: in test mode, auto-vote for a random alive player
-      // after a random short delay, so a 15-tab test runs itself with no manual clicking.
       if (isTestMode() && alivePlayers.length > 0) {
         const randomTarget = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
         const delay = 1000 + Math.random() * 4000;
@@ -102,13 +104,17 @@ function PlayerView() {
         setRevealedInfo({ eliminatedId, reason, name: rosterRef.current[eliminatedId] || null });
         setAlivePlayers(remainingPlayers);
         setRevealPhase('REVEALED');
+
+        if (iWasEliminatedThisRoundRef.current) {
+          setIsEliminated(true);
+          setEliminatedInRound(roundNumberRef.current);
+          playSound('eliminatedYou', { volume: 0.9 });
+        }
       }, REVEAL_PAUSE_MS);
     });
 
     socket.on('YOU_ARE_ELIMINATED', () => {
-      setIsEliminated(true);
-      setEliminatedInRound(roundNumberRef.current);
-      playSound('eliminatedYou', { volume: 0.9 });
+      iWasEliminatedThisRoundRef.current = true;
     });
 
     socket.on('PLAYER_LEFT', ({ playerId, alivePlayers }) => {
@@ -162,12 +168,11 @@ function PlayerView() {
     socket.emit('JOIN_GAME', { roomCode: roomCode.toUpperCase(), name });
   };
 
-  const castVote = (targetId) => {
-    setSelectedTarget(targetId);
-    socket.emit('CAST_VOTE', { targetId });
+  const confirmVote = () => {
+    if (!selectedTarget) return;
+    socket.emit('CAST_VOTE', { targetId: selectedTarget });
   };
 
-  // ---- Not joined yet ----
   if (!joined) {
     return (
       <div className="player-container">
@@ -180,7 +185,6 @@ function PlayerView() {
     );
   }
 
-  // ---- Joined, waiting in lobby ----
   if (!gameStarted) {
     return (
       <div className="player-container">
@@ -190,7 +194,6 @@ function PlayerView() {
     );
   }
 
-  // ---- Game fully ended: winner screen (shown to everyone) ----
   if (winnerId) {
     const winnerName = rosterRef.current[winnerId] || 'Unknown';
     const youWon = myId === winnerId;
@@ -203,9 +206,9 @@ function PlayerView() {
             {isRevealed ? (youWon ? 'You Won!' : 'Winner') : 'Crowning the winner...'}
           </div>
           {isRevealed ? (
-            <div className="player-winner-name">{youWon ? `🏆 ${winnerName} 🏆` : winnerName}</div>
+            <div className="player-winner-name">{youWon ? `Winner: ${winnerName}` : winnerName}</div>
           ) : (
-            <div className="player-reveal-pause">🥁 🥁 🥁</div>
+            <div className="player-reveal-pause">Drumroll...</div>
           )}
         </div>
         {isRevealed && isEliminated && !youWon && (
@@ -215,23 +218,29 @@ function PlayerView() {
     );
   }
 
-  // ---- Dramatic round reveal (shown to eliminated spectators AND active players alike) ----
   if (revealPhase !== 'IDLE') {
     return (
       <div className="player-container">
         {isEliminated && (
-          <div className="player-spectator-banner">Eliminated in Round {eliminatedInRound} — spectating</div>
+          <div className="player-spectator-banner">Eliminated in Round {eliminatedInRound} - spectating</div>
         )}
         <h2 className="player-round-label">Round {roundNumber}</h2>
         {revealPhase === 'REVEALING' && <div className="player-reveal-pause">Tallying votes...</div>}
         {revealPhase === 'REVEALED' && revealedInfo && (
           revealedInfo.eliminatedId ? (
-            <>
-              <div className="player-eliminated-name">{revealedInfo.name}</div>
-              <div className="player-eliminated-label">eliminated</div>
-            </>
+            revealedInfo.eliminatedId === myId ? (
+              <>
+                <div className="player-you-eliminated-title">YOU'RE OUT</div>
+                <div className="player-eliminated-label">your journey ends here</div>
+              </>
+            ) : (
+              <>
+                <div className="player-eliminated-name">{revealedInfo.name}</div>
+                <div className="player-eliminated-label">eliminated</div>
+              </>
+            )
           ) : (
-            <div className="player-tie-message">It's a tie — no elimination</div>
+            <div className="player-tie-message">It's a tie - no elimination</div>
           )
         )}
         <p className="player-remaining">Players remaining: {alivePlayers.length}</p>
@@ -239,12 +248,11 @@ function PlayerView() {
     );
   }
 
-  // ---- Final two reached, decision pending ----
   if (finalTwo) {
     return (
       <div className="player-container">
         {isEliminated && (
-          <div className="player-spectator-banner">Eliminated in Round {eliminatedInRound} — spectating</div>
+          <div className="player-spectator-banner">Eliminated in Round {eliminatedInRound} - spectating</div>
         )}
         <h1>Final Two</h1>
         <p className="player-big-number">{finalTwoSecondsLeft}</p>
@@ -253,19 +261,17 @@ function PlayerView() {
     );
   }
 
-  // ---- Eliminated: live spectator idle screen ----
   if (isEliminated) {
     return (
       <div className="player-container eliminated-screen">
         <h1>You have been eliminated</h1>
         <p>Eliminated in Round {eliminatedInRound}.</p>
-        <p>Round {roundNumber} in progress — {alivePlayers.length} players remaining.</p>
+        <p>Round {roundNumber} in progress - {alivePlayers.length} players remaining.</p>
         <p>Watch the rest of the game unfold here as it happens.</p>
       </div>
     );
   }
 
-  // ---- Already voted, waiting for round to end ----
   if (hasVoted) {
     return (
       <div className="player-container">
@@ -275,31 +281,45 @@ function PlayerView() {
     );
   }
 
-  // ---- Voting screen ----
+  // ---- Voting screen: 3x5 grid, no scroll, tap-to-select, centered confirm overlay ----
+  const rows = Math.max(1, Math.ceil(alivePlayers.length / 3));
+  const selectedPlayer = alivePlayers.find((p) => p.id === selectedTarget);
+
   return (
-    <div className="player-container">
-      <h1>Round {roundNumber} — Vote</h1>
-      <p>Tap a player, then confirm.</p>
-      <ul className="player-vote-list">
-        {alivePlayers.map((p) => (
-          <li key={p.id}>
-            <button
-              className={`player-vote-btn ${selectedTarget === p.id ? 'selected' : ''}`}
-              onClick={() => setSelectedTarget(p.id)}
-            >
-              {p.name} {p.id === myId ? '(You)' : ''}
-            </button>
-          </li>
-        ))}
-      </ul>
-      <button
-        className="player-btn"
-        disabled={!selectedTarget}
-        onClick={() => castVote(selectedTarget)}
-        style={{ marginTop: 10 }}
+    <div className="vote-screen-container">
+      <div className="vote-top-bar">Round {roundNumber} - Tap a player</div>
+
+      <div
+        className="vote-grid"
+        style={{ gridTemplateRows: `repeat(${rows}, 1fr)` }}
       >
-        Confirm Vote
-      </button>
+        {alivePlayers.map((p) => (
+          <button
+            key={p.id}
+            className="vote-tile"
+            style={{ '--tile-accent': getAvatarColor(p.name) }}
+            onClick={() => setSelectedTarget(p.id)}
+          >
+            <Avatar name={p.name} size="fluid" />
+            <span className="vote-tile-name">{p.name}{p.id === myId ? ' (You)' : ''}</span>
+          </button>
+        ))}
+      </div>
+
+      {selectedPlayer && (
+        <div className="vote-confirm-overlay" onClick={() => setSelectedTarget(null)}>
+          <div className="vote-confirm-card" onClick={(e) => e.stopPropagation()}>
+            <Avatar name={selectedPlayer.name} size="large" />
+            <div className="vote-confirm-name">{selectedPlayer.name}</div>
+            <button className="player-btn vote-confirm-btn" onClick={confirmVote}>
+              Confirm Vote
+            </button>
+            <button className="vote-cancel-link" onClick={() => setSelectedTarget(null)}>
+              Change selection
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

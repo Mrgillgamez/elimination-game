@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { supabase } from '../supabaseClient';
+import CountrySelector from './CountrySelector';
 import './AuthPage.css';
 
 function SignupPage() {
@@ -7,19 +8,30 @@ function SignupPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [newUserId, setNewUserId] = useState(null);
 
   const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
     if (error) {
       setError(error.message);
       return;
     }
-    window.location.href = '/host';
+    // Show the country popup before sending them to /host.
+    setNewUserId(data.user.id);
   };
+
+  if (newUserId) {
+    return (
+      <CountrySelector
+        userId={newUserId}
+        onDone={() => { window.location.href = '/host'; }}
+      />
+    );
+  }
 
   return (
     <div className="auth-container">

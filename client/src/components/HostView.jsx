@@ -3,6 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { socket } from '../socket';
 import { playSound, stopSound, playCountdownNumber } from '../sounds';
 import { useRequireActiveAccount } from '../hooks/useRequireActiveAccount';
+import { supabase } from '../supabaseClient';
 import HostTopBar from './HostTopBar';
 import Confetti from './Confetti';
 import './HostView.css';
@@ -96,7 +97,11 @@ function HostView() {
     });
 
     const savedRoomCode = sessionStorage.getItem('hostRoomCode');
-    if (savedRoomCode) socket.emit('HOST_REJOIN', { roomCode: savedRoomCode });
+    if (savedRoomCode) {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        socket.emit('HOST_REJOIN', { roomCode: savedRoomCode, accessToken: session?.access_token });
+      });
+    }
 
     return () => {
       socket.off('ROOM_CREATED');
@@ -134,7 +139,10 @@ function HostView() {
 
   const findName = (id) => rosterRef.current[id] || null;
 
-  const createGame = () => socket.emit('CREATE_GAME');
+  const createGame = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    socket.emit('CREATE_GAME', { accessToken: session?.access_token });
+  };
   const startGame = () => socket.emit('START_GAME');
 
   const startNewGame = () => {
