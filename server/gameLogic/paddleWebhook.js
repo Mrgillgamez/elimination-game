@@ -1,5 +1,6 @@
-const { Paddle, Environment } = require("@paddle/paddle-node-sdk");
+﻿const { Paddle, Environment } = require("@paddle/paddle-node-sdk");
 const { createClient } = require("@supabase/supabase-js");
+const { getTierByPriceId } = require("./tiers");
 
 const paddleEnv = process.env.PADDLE_ENV === "production" ? Environment.production : Environment.sandbox;
 
@@ -30,11 +31,34 @@ async function handlePaddleWebhook(rawBody, signatureHeader) {
 
   if (eventData.eventType === "transaction.completed") {
     const customData = eventData.data.customData || {};
-    const { supabase_user_id: userId, tier } = customData;
+    const userId = customData.supabase_user_id;
 
-    if (!userId || !tier) {
-      console.error("transaction.completed missing customData:", customData);
+    if (!userId) {
+      console.error("transaction.completed missing supabase_user_id:", customData);
       return { ok: false, status: 400, message: "Missing customData" };
+    }
+
+    // SECURITY: the tier is derived from the price Paddle says was actually
+    // paid, NOT from customData (customData is set by the browser and can be
+    // edited by the buyer).
+    const items = eventData.data.items || [];
+    if (items.length !== 1) {
+      console.error(`Unexpected item count (${items.length}) for user ${userId}`);
+      return { ok: false, status: 400, message: "Unexpected items" };
+    }
+    const paidPriceId = items[0].price?.id || items[0].priceId;
+    const tier = getTierByPriceId(paidPriceId);
+
+    if (!tier) {
+      console.error(`Unknown price ID ${paidPriceId} for user ${userId}`);
+      return { ok: false, status: 400, message: "Unknown price" };
+    }
+
+    // Tampering signal: browser claimed a different tier than what was paid.
+    if (customData.tier && customData.tier !== tier) {
+      console.warn(
+        `Tier mismatch for user ${userId}: browser said ${customData.tier}, paid for ${tier}. Using paid tier.`
+      );
     }
 
     const { error } = await serviceClient
