@@ -122,3 +122,13 @@ Stages, in dependency order:
 - Give both restart commands proactively after any pause: "node index.js" in server/, "npm run dev" in client/
 - Do NOT ask for verification/confirmation pings after routine updates - just update and move on
 - Keep responses concise; be dramatic/premium about the game's feel, efficient/no-nonsense about build steps
+
+## Known issues / deferred (low priority)
+- UpgradePage.jsx: if a visitor is NOT logged in, Choose Plan buttons do nothing (silent return).
+  Fix later: redirect to /login when no session, and reset button text after checkout closes.
+
+## Status update - payment flow
+- Sandbox payment on the live URL: CONFIRMED completes. profiles row shows plan_status=paid and plan_tier set by the webhook.
+- Render env vars: 10 required (6 server-side + 4 VITE_*), all added.
+- UpgradePage: post-payment auto-redirect to /host added (polls profiles until paid, 45s timeout).
+- Still to verify: Render log line "Payment confirmed for user" on a fresh test payment.
