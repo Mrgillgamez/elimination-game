@@ -1,50 +1,32 @@
 import { useEffect, useState } from 'react';
 import { initializePaddle } from '@paddle/paddle-js';
 import { supabase } from '../supabaseClient';
-import { TIERS } from '../tiers';
+import { TIERS, TOPUPS } from '../tiers';
 import './AuthPage.css';
 import './UpgradePage.css';
-
-// After a successful payment, wait for the webhook to mark the account as paid,
-// then send the host to the game. Checks every 1.5s, gives up after 45s.
-async function waitForPaidThenRedirect(onTimeout) {
-  const { data: { session } } = await supabase.auth.getSession();
-  const uid = session?.user?.id;
-  if (!uid) {
-    onTimeout();
-    return;
-  }
-  const startedAt = Date.now();
-  const timer = setInterval(async () => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('plan_status')
-      .eq('id', uid)
-      .single();
-    if (data?.plan_status === 'paid') {
-      clearInterval(timer);
-      window.location.href = '/host';
-    } else if (Date.now() - startedAt > 45000) {
-      clearInterval(timer);
-      onTimeout();
-    }
-  }, 1500);
-}
 
 function UpgradePage() {
   const [paddle, setPaddle] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
   const [userId, setUserId] = useState(null);
-  const [checkoutTier, setCheckoutTier] = useState(null);
+  const [pendingKey, setPendingKey] = useState(null);
   const [activating, setActivating] = useState(false);
   const [error, setError] = useState('');
+  const [currentTierKey, setCurrentTierKey] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setUserEmail(session.user.email);
-        setUserId(session.user.id);
-      }
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return;
+      setUserEmail(session.user.email);
+      setUserId(session.user.id);
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('plan_status, plan_tier')
+        .eq('id', session.user.id)
+        .single();
+
+      if (profile?.plan_status === 'paid') setCurrentTierKey(profile.plan_tier);
     });
 
     initializePaddle({
@@ -53,32 +35,30 @@ function UpgradePage() {
       eventCallback: (event) => {
         if (event.name === 'checkout.completed') {
           setActivating(true);
-          waitForPaidThenRedirect(() => {
-            setActivating(false);
-            setError('Payment received, but activation is taking longer than usual. Refresh this page in a minute, or contact support.');
-          });
+          setTimeout(() => { window.location.href = '/host'; }, 3000);
         }
       },
     }).then((paddleInstance) => setPaddle(paddleInstance));
   }, []);
 
-  const handleUpgradeClick = (tier) => {
+  const openCheckout = (key, priceId, extraCustomData) => {
     if (!paddle || !userId) return;
-    setCheckoutTier(tier.key);
+    setPendingKey(key);
     paddle.Checkout.open({
-      items: [{ priceId: tier.priceId, quantity: 1 }],
+      items: [{ priceId, quantity: 1 }],
       customer: { email: userEmail },
-      customData: { supabase_user_id: userId, tier: tier.key },
+      customData: { supabase_user_id: userId, ...extraCustomData },
     });
   };
+
+  const currentTier = TIERS.find((t) => t.key === currentTierKey);
+  const showTopups = currentTierKey && currentTier?.gameLimit !== null;
 
   return (
     <div className="auth-container">
       <div className="auth-card upgrade-card upgrade-card-wide">
         <h1>Choose your plan</h1>
-        <p className="auth-subnote">
-          Pick the plan that fits how often you host.
-        </p>
+        <p className="auth-subnote">Pick the plan that fits how often you host.</p>
 
         <div className="upgrade-tier-grid">
           {TIERS.map((tier) => (
@@ -93,18 +73,41 @@ function UpgradePage() {
               </div>
               <button
                 className="auth-btn"
-                onClick={() => handleUpgradeClick(tier)}
+                onClick={() => openCheckout(tier.key, tier.priceId, { tier: tier.key })}
                 disabled={!paddle || activating}
               >
-                {!paddle ? 'Loading...' : checkoutTier === tier.key ? 'Opening checkout...' : 'Choose Plan'}
+                {!paddle ? 'Loading...' : pendingKey === tier.key ? 'Opening checkout...' : 'Choose Plan'}
               </button>
             </div>
           ))}
         </div>
 
-        {activating && (
-          <p className="auth-subnote">Payment received. Activating your plan...</p>
+        {showTopups && (
+          <>
+            <h2 className="upgrade-topup-heading">Running low this cycle?</h2>
+            <p className="auth-subnote">Add more games without changing your plan.</p>
+            <div className="upgrade-tier-grid">
+              {TOPUPS.map((topup) => (
+                <div key={topup.key} className="upgrade-tier-card">
+                  <div className="upgrade-tier-label">{topup.label}</div>
+                  <div className="upgrade-tier-price-box">
+                    <span className="upgrade-tier-price">${topup.priceUsd}</span>
+                  </div>
+                  <div className="upgrade-tier-limit">one-time, this cycle only</div>
+                  <button
+                    className="auth-btn"
+                    onClick={() => openCheckout(topup.key, topup.priceId, { topup: topup.key })}
+                    disabled={!paddle || activating}
+                  >
+                    {!paddle ? 'Loading...' : pendingKey === topup.key ? 'Opening checkout...' : 'Add Games'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
+
+        {activating && <p className="auth-subnote">Payment received. Redirecting you back...</p>}
         {error && <p className="auth-error">{error}</p>}
 
         <ul className="upgrade-feature-list">

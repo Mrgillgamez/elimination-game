@@ -1,4 +1,4 @@
-﻿const { createClient } = require("@supabase/supabase-js");
+const { createClient } = require("@supabase/supabase-js");
 const { TIERS } = require("./tiers");
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -10,10 +10,6 @@ function scopedClient(accessToken) {
   });
 }
 
-// Finds the start of the current rolling 30-day billing cycle.
-// e.g. if plan_started_at is Jan 1 and today is Feb 15, the cycle
-// boundaries are every 30 days from Jan 1 - so this returns Jan 31
-// (the most recent boundary at or before "now").
 function currentCycleStart(planStartedAt) {
   const start = new Date(planStartedAt);
   const now = new Date();
@@ -33,7 +29,7 @@ async function verifyAccountAccess(accessToken) {
 
   const { data: profile, error: profileError } = await supabase
     .from("profiles")
-    .select("plan_status, trial_ends_at, plan_tier, plan_started_at")
+    .select("plan_status, trial_ends_at, plan_tier, plan_started_at, bonus_games, bonus_games_cycle_start")
     .eq("id", user.id)
     .single();
 
@@ -59,6 +55,14 @@ async function verifyAccountAccess(accessToken) {
     }
 
     const cycleStart = currentCycleStart(profile.plan_started_at);
+
+    // Bonus games only count if they were granted in THIS billing cycle.
+    let bonus = 0;
+    if (profile.bonus_games_cycle_start && new Date(profile.bonus_games_cycle_start).getTime() === cycleStart.getTime()) {
+      bonus = profile.bonus_games || 0;
+    }
+    const effectiveLimit = tier.gameLimit + bonus;
+
     const { count, error: countError } = await supabase
       .from("game_creations")
       .select("id", { count: "exact", head: true })
@@ -68,7 +72,7 @@ async function verifyAccountAccess(accessToken) {
 
     if (countError) return { valid: false, reason: "NO_PROFILE" };
 
-    if (count >= tier.gameLimit) {
+    if (count >= effectiveLimit) {
       return { valid: false, reason: "QUOTA_EXCEEDED" };
     }
 
@@ -85,23 +89,23 @@ async function logGameCreated(accessToken, userId, roomCode) {
     .insert({ user_id: userId, room_code: roomCode, started: false })
     .select("id")
     .single();
-
-  if (error) {
-    console.error("Failed to log game creation:", error.message);
-    return null;
-  }
+  if (error) { console.error("Failed to log game creation:", error.message); return null; }
   return data.id;
 }
 
 async function markGameStarted(accessToken, recordId) {
   if (!recordId) return;
   const supabase = scopedClient(accessToken);
-  const { error } = await supabase
-    .from("game_creations")
-    .update({ started: true })
-    .eq("id", recordId);
-
+  const { error } = await supabase.from("game_creations").update({ started: true }).eq("id", recordId);
   if (error) console.error("Failed to mark game as started:", error.message);
 }
 
-module.exports = { verifyAccountAccess, logGameCreated, markGameStarted };
+async function getUserId(accessToken) {
+  if (!accessToken) return null;
+  const supabase = scopedClient(accessToken);
+  const { data: { user }, error } = await supabase.auth.getUser(accessToken);
+  if (error || !user) return null;
+  return user.id;
+}
+
+module.exports = { verifyAccountAccess, logGameCreated, markGameStarted, getUserId, currentCycleStart };

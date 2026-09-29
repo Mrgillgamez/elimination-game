@@ -118,3 +118,10 @@
   font-weight: 700;
   flex-shrink: 0;
 }
+
+.upgrade-topup-heading {
+  margin-top: 2rem;
+  font-family: var(--font-body);
+  font-size: 1.2rem;
+  color: var(--ink);
+}
