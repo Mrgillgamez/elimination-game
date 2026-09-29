@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { socket } from '../socket';
 import { playSound, stopSound, playCountdownNumber } from '../sounds';
@@ -30,6 +30,8 @@ function HostView() {
   const [winnerPhase, setWinnerPhase] = useState(null);
   const [finalTwoPlayers, setFinalTwoPlayers] = useState(null);
 
+  const [createGameError, setCreateGameError] = useState(null); // { message, reason } | null
+
   const revealTimeoutRef = useRef(null);
   const rosterRef = useRef({});
   const activeSoundRef = useRef(null);
@@ -38,7 +40,11 @@ function HostView() {
   useEffect(() => {
     socket.on('ROOM_CREATED', ({ roomCode }) => {
       setRoomCode(roomCode);
+      setCreateGameError(null);
       sessionStorage.setItem('hostRoomCode', roomCode);
+    });
+    socket.on('JOIN_ERROR', ({ message, reason }) => {
+      setCreateGameError({ message: message || 'Something went wrong. Please try again.', reason });
     });
     socket.on('LOBBY_UPDATED', ({ players, canStart }) => {
       setPlayers(players);
@@ -105,6 +111,7 @@ function HostView() {
 
     return () => {
       socket.off('ROOM_CREATED');
+      socket.off('JOIN_ERROR');
       socket.off('LOBBY_UPDATED');
       socket.off('GAME_STARTED');
       socket.off('ROUND_STARTED');
@@ -140,6 +147,7 @@ function HostView() {
   const findName = (id) => rosterRef.current[id] || null;
 
   const createGame = async () => {
+    setCreateGameError(null);
     const { data: { session } } = await supabase.auth.getSession();
     socket.emit('CREATE_GAME', { accessToken: session?.access_token });
   };
@@ -160,11 +168,27 @@ function HostView() {
   }
 
   if (!roomCode) {
+    const needsUpgrade =
+      createGameError?.reason === 'TRIAL_EXPIRED' || createGameError?.reason === 'QUOTA_EXCEEDED';
     return (
       <div className="host-container">
         <HostTopBar />
         <h1>Host a Game</h1>
         <button className="host-start-btn" onClick={createGame}>Create Game</button>
+        {createGameError && (
+          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+            <p style={{ color: '#ff6b6b' }}>{createGameError.message}</p>
+            {needsUpgrade && (
+              <a
+                href="/upgrade"
+                className="host-start-btn"
+                style={{ marginTop: '0.75rem', display: 'inline-block', textDecoration: 'none' }}
+              >
+                Upgrade Plan
+              </a>
+            )}
+          </div>
+        )}
       </div>
     );
   }
