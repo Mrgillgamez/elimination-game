@@ -176,14 +176,10 @@ function HostView() {
         <h1>Host a Game</h1>
         <button className="host-start-btn" onClick={createGame}>Create Game</button>
         {createGameError && (
-          <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
-            <p style={{ color: '#ff6b6b' }}>{createGameError.message}</p>
+          <div className="host-error-block">
+            <p className="host-error-message">{createGameError.message}</p>
             {needsUpgrade && (
-              <a
-                href="/upgrade"
-                className="host-start-btn"
-                style={{ marginTop: '0.75rem', display: 'inline-block', textDecoration: 'none' }}
-              >
+              <a href="/upgrade" className="host-start-btn host-upgrade-btn">
                 Upgrade Plan
               </a>
             )}
@@ -287,3 +283,4 @@ function HostView() {
 }
 
 export default HostView;
+

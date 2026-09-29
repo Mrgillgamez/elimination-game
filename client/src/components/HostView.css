@@ -154,6 +154,24 @@
 
 .host-start-btn:disabled { background: var(--border); color: var(--ink-muted); cursor: not-allowed; }
 
+.host-error-block {
+  margin-top: var(--space-5);
+  text-align: center;
+}
+
+.host-error-message {
+  color: var(--danger);
+  font-size: clamp(0.9rem, 2vw, 1.05rem);
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.host-upgrade-btn {
+  margin-top: var(--space-3);
+  display: inline-block;
+  text-decoration: none;
+}
+
 @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
 @keyframes fadeIn { from { opacity: 0; transform: scale(0.85); } to { opacity: 1; transform: scale(1); } }
 @keyframes shake {
@@ -171,4 +189,5 @@
   60% { opacity: 1; transform: scale(1.15); }
   100% { opacity: 1; transform: scale(1); }
 }
+
 
