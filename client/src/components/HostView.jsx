@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import { socket } from '../socket';
 import { playSound, stopSound, playCountdownNumber } from '../sounds';
@@ -6,6 +6,7 @@ import { useRequireActiveAccount } from '../hooks/useRequireActiveAccount';
 import { supabase } from '../supabaseClient';
 import HostTopBar from './HostTopBar';
 import Confetti from './Confetti';
+import UpgradePopup from './UpgradePopup';
 import './HostView.css';
 
 const REVEAL_PAUSE_MS = 3000;
@@ -93,7 +94,7 @@ function HostView() {
       stopSound(activeSoundRef.current);
       setGameEnded(winnerId);
       setWinnerPhase('CROWNING');
-      sessionStorage.removeItem('hostRoomCode'); // game is over - don't auto-rejoin it later
+      sessionStorage.removeItem('hostRoomCode');
       activeSoundRef.current = playSound('drumroll', { volume: 0.8 });
       revealTimeoutRef.current = setTimeout(() => {
         stopSound(activeSoundRef.current);
@@ -175,15 +176,16 @@ function HostView() {
         <HostTopBar />
         <h1>Host a Game</h1>
         <button className="host-start-btn" onClick={createGame}>Create Game</button>
-        {createGameError && (
+        {createGameError && !needsUpgrade && (
           <div className="host-error-block">
             <p className="host-error-message">{createGameError.message}</p>
-            {needsUpgrade && (
-              <a href="/upgrade" className="host-start-btn host-upgrade-btn">
-                Upgrade Plan
-              </a>
-            )}
           </div>
+        )}
+        {needsUpgrade && (
+          <UpgradePopup
+            reason={createGameError.reason}
+            onClose={() => setCreateGameError(null)}
+          />
         )}
       </div>
     );
@@ -283,4 +285,3 @@ function HostView() {
 }
 
 export default HostView;
-

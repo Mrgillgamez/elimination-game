@@ -14,8 +14,11 @@
 ## Accounts / Trial - Stages A1-A8
 - [x] A1-A6 - Supabase auth, signup/login, trial gate, upgrade screen, logout
 - [x] A7 - Paddle checkout + webhook: CONFIRMED in sandbox on the live URL
-- [~] A8 - End-to-end test: signup -> trial -> expire -> pay -> auto-redirect to /host CONFIRMED
-      in sandbox. Still untested: monthly quota enforcement per tier (server side).
+- [x] A8 - Full end-to-end test CONFIRMED on live Render URL: signup -> trial -> expire -> pay
+      -> profiles updated with correct tier from paid price -> redirect to /host -> quota
+      enforcement blocks an 11th game on a 10-game tier (verified via direct DB count + live
+      UI test). Only remaining polish: the error is currently plain red text (see "PICK UP HERE"
+      below) - functionally done, visually needs work.
 
 ## Visual Redesign - Stage B: COMPLETE (100%) - LIVE
 - Design tokens in client/src/theme.css: --void #120E16, --surface #1E1720,
@@ -60,10 +63,26 @@ Decisions locked in:
   Security to do: rotate the live Paddle key that was once pasted in chat.
 
 ## Known issues / deferred
-- SECURITY FIX IN PROGRESS: paddleWebhook.js was trusting the browser-sent customData.tier to set
-  plan_tier (a buyer could pay for Starter and claim Unlimited). Rewritten to derive the tier from the
-  paid price ID via getTierByPriceId. Code written; still needs deploy to Render + a sandbox purchase
-  test to confirm plan_tier is set correctly.
+- IN PROGRESS, PICK UP HERE: quota-exceeded / trial-expired message on /host currently shows as a
+  plain red inline message + button (functional, confirmed working, just visually harsh - "no
+  negative vibe" per user feedback). Decided to replace it with a popup matching the existing
+  CountrySelector.jsx / CountrySelector.css overlay pattern (positive framing: "ready for more" /
+  "upgrade to keep the game going" style, not an error).
+  NEXT STEP (first thing to do in new chat): run these two commands and read the output before
+  writing any code:
+    cd C:\Users\iamsh\elimination-game\client\src\components
+    Get-Content CountrySelector.jsx
+    Get-Content CountrySelector.css
+  Then build a new UpgradePopup.jsx/css (or similarly named) reusing that same overlay structure,
+  triggered from HostView.jsx's existing createGameError state (see needsUpgrade flag, currently
+  around line 171-172) instead of the current inline <div className="host-error-block">. Replace
+  that inline block with the new popup component. Keep the underlying JOIN_ERROR listener and
+  createGameError state as-is - only the presentation for TRIAL_EXPIRED/QUOTA_EXCEEDED needs to
+  change from inline-red-text to a friendly popup. Non-upgrade errors (any other reason) should
+  probably stay as the plain inline message, since those aren't "buy more" moments.
+- SECURITY FIX CONFIRMED: paddleWebhook.js now derives plan_tier from the paid price ID via
+  getTierByPriceId, not from browser-sent customData.tier. Verified on the live Render URL: bought
+  Starter, profiles row shows plan_status=paid, plan_tier=starter, plan_started_at set correctly.
 - UpgradePage: logged-out visitors clicking Choose Plan see nothing (silent return).
 - UpgradePage: if the checkout overlay is closed without paying, the button stays "Opening checkout...".
 - C1 re-test pending: create game, get players in, refresh host tab mid-lobby, confirm it reconnects.
@@ -79,5 +98,9 @@ Decisions locked in:
 - Restart commands: "node index.js" in server/, "npm run dev" in client/
 - Do NOT ask for verification pings after routine updates - just update and move on
 - Keep responses concise; dramatic/premium for the game's feel, efficient for build steps
+
+
+
+
 
 
