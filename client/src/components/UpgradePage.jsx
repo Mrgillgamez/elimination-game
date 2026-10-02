@@ -37,6 +37,9 @@ function UpgradePage() {
           setActivating(true);
           setTimeout(() => { window.location.href = '/host'; }, 3000);
         }
+        if (event.name === 'checkout.closed' || event.name === 'checkout.error') {
+          setPendingKey(null);
+        }
       },
     }).then((paddleInstance) => setPaddle(paddleInstance));
   }, []);
