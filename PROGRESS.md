@@ -146,3 +146,13 @@ NEW PLAN:
 ## UPDATE: Top-up bug FIXED - old sandbox price IDs did not exist. Recreated in sandbox and swapped IDs in client/src/tiers.js and server/gameLogic/tiers.js. Needs live test on Render.
 
 ## UPDATE: Top-ups CONFIRMED end-to-end in sandbox (bonus_games 10 -> 20 after second payment). Next: paid-user /upgrade restructure (top-ups + Upgrade to Unlimited that cancels old subscription).
+
+## STATUS SNAPSHOT (2026-10-03) - 96% complete
+DONE: Core game 0-9, Accounts A1-A8, Redesign B, C1-C6, UpgradePopup, one-time top-ups ($12/$30) CONFIRMED end-to-end in sandbox.
+NEXT (in order):
+ 1. Paid-user /upgrade redesign: top-ups + single "Upgrade to Unlimited" action. Webhook must cancel the old Paddle subscription (needs profiles.paddle_subscription_id populated - currently NOT set).
+ 2. C7 exact-match localized pricing
+ 3. C8 pay-as-you-go
+ 4. C9 trust/UX pass
+ 5. Paddle live verification (ID + proof of address), then swap sandbox values for live.
+Known small issues: logged-out Choose Plan does nothing; C1 refresh-host re-test pending; rotate live Paddle key once pasted in chat.
