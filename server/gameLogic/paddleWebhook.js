@@ -1,6 +1,6 @@
 const { Paddle, Environment } = require("@paddle/paddle-node-sdk");
 const { createClient } = require("@supabase/supabase-js");
-const { getTierByPriceId, getTopupByPriceId, TOPUPS } = require("./tiers");
+const { getTierByPriceId, getTopupByPriceId, isPaygGamePrice, TOPUPS } = require("./tiers");
 const { currentCycleStart } = require("./supabaseAuth");
 
 const paddleEnv = process.env.PADDLE_ENV === "production" ? Environment.production : Environment.sandbox;
@@ -27,6 +27,10 @@ async function handlePaddleWebhook(rawBody, signatureHeader) {
     }
 
     const items = eventData.data.items || [];
+    if (items.some((it) => isPaygGamePrice(it.price?.id || it.priceId))) {
+      console.log(`Pay-as-you-go usage transaction for user ${userId}; no plan change needed`);
+      return { ok: true, status: 200 };
+    }
     if (items.length !== 1) {
       console.error(`Unexpected item count (${items.length}) for user ${userId}`);
       return { ok: false, status: 400, message: "Unexpected items" };

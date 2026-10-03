@@ -181,3 +181,18 @@ Europe EUR = Germany, France, Italy, Spain, Netherlands, Ireland. Everyone else 
 C7 STATUS: Paddle sandbox overrides NOT yet added (0 of 5 prices done).
 
 ## UPDATE (2026-10-03): C7 Paddle sandbox side DONE - all 5 prices have 10 local prices each (see approved table above). 0 active currency conversions, so countries outside the table are charged the USD base price. NEXT: mirror the table in code (client display by profiles.country, prefill country into Paddle checkout).
+
+## UPDATE (2026-10-03): C7 code pushed (client/src/pricing.js + UpgradePage uses profiles.country and prefills checkout country). Starter test payment redirect and plan detection re-checked: working, no bug. Remaining for C7: confirm India (Rs) and UK (GBP) prices display and match checkout.
+
+## UPDATE (2026-10-03): C7 DONE and CONFIRMED (India INR and UK GBP display matches Paddle checkout). Next: C8 pay-as-you-go, C9 trust/UX pass, Paddle live verification.
+
+## C8 DECISIONS (2026-10-03)
+- $2 per STARTED game (game_creations.started = true), NO base fee, uncapped, billed monthly.
+- Paddle only allows one-time charges on an EXISTING subscription -> pay-as-you-go user gets a $0/month subscription; usage billed via subscriptions charge API (effective_from next_billing_period).
+- Paddle prices needed: (1) recurring $0 monthly "Pay-as-you-go", (2) one-time $2 "Pay-as-you-go game".
+- Billing trigger: free external cron calling a secret-protected server endpoint (Render free server sleeps).
+- STATUS: Paddle prices NOT yet created.
+
+## C8 UPDATE (2026-10-03): Paddle sandbox accepted a $0.00/Monthly price. Created: $0 monthly pri_01m40egg4zb3yn5rddkmz3w648 and $2 one-time pri_01m40ehjr1tppk1kw93xh6bf3h (IDs still to be double-checked). NEXT: add Pay-as-you-go to client+server code (webhook must recognise the new price or it returns 400 Unknown price), then test a $0 checkout saves the card.
+
+## C8 UPDATE (2026-10-03): payg added to client+server tiers.js (perGameUsd 2, usageBased), webhook ignores the $2 usage price (no 400), UpgradePage shows 4th card and a "You're on Pay as you go" view. DB has no plan_tier constraint (checked). Build OK. NEXT: test $0 checkout saves card + webhook fires; then build the monthly billing job. DO NOT go live with payg until billing job exists.
