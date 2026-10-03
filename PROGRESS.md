@@ -156,3 +156,8 @@ NEXT (in order):
  4. C9 trust/UX pass
  5. Paddle live verification (ID + proof of address), then swap sandbox values for live.
 Known small issues: logged-out Choose Plan does nothing; C1 refresh-host re-test pending; rotate live Paddle key once pasted in chat.
+
+## UPDATE (2026-10-03): Webhook saves paddle_subscription_id (CONFIRMED). Cancel of old subscription FAILED with "not authorized to create subscription-cancel" = Paddle sandbox API key lacks Subscriptions:Write. Fix = enable Subscriptions Write on the key in Paddle Developer tools > Authentication, then re-test (buy any plan again; expect log "Old subscription ... scheduled to cancel"). NOTE: same permission is needed on the LIVE key later.
+PREFERENCE: progress notes = file only, no git push.
+
+## UPDATE (2026-10-03): Old-subscription cancel CONFIRMED in sandbox after enabling Subscriptions Write on the API key. Log: "Old subscription sub_... scheduled to cancel at period end". Backend for Upgrade-to-Unlimited is DONE. Remaining: paid-user /upgrade page UI, C7, C8, C9, Paddle live verification. Reminder: enable Subscriptions Write on the LIVE key too.
