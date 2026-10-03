@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { initializePaddle } from '@paddle/paddle-js';
 import { supabase } from '../supabaseClient';
 import { TIERS, TOPUPS } from '../tiers';
@@ -16,6 +16,7 @@ function UpgradePage() {
   const [currentTierKey, setCurrentTierKey] = useState(null);
   const [country, setCountry] = useState(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
+  const [mode, setMode] = useState('monthly');
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -66,8 +67,11 @@ function UpgradePage() {
 
   const currentTier = TIERS.find((t) => t.key === currentTierKey);
   const isPaid = !!currentTier;
-  const isUnlimited = isPaid && currentTier.gameLimit === null;
+  const isPayg = isPaid && !!currentTier.usageBased;
+  const isUnlimited = isPaid && currentTier.key === 'unlimited';
   const unlimitedTier = TIERS.find((t) => t.key === 'unlimited');
+  const paygTier = TIERS.find((t) => t.key === 'payg');
+  const monthlyTiers = TIERS.filter((t) => !t.usageBased);
 
   const footer = (
     <>
@@ -91,6 +95,27 @@ function UpgradePage() {
       <div className="auth-container">
         <div className="auth-card upgrade-card upgrade-card-wide">
           <p className="auth-subnote">Loading your plan...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isPayg) {
+    return (
+      <div className="auth-container">
+        <div className="auth-card upgrade-card upgrade-card-wide">
+          <h1>You're on Pay as you go</h1>
+          <p className="auth-subnote">
+            Host as many games as you like. You pay $2 per game that actually starts, charged once a month.
+          </p>
+          <button
+            className="auth-btn"
+            style={{ maxWidth: 320, margin: '0 auto' }}
+            onClick={() => { window.location.href = '/host'; }}
+          >
+            Back to hosting
+          </button>
+          {footer}
         </div>
       </div>
     );
@@ -177,27 +202,67 @@ function UpgradePage() {
         <h1>Choose your plan</h1>
         <p className="auth-subnote">Pick the plan that fits how often you host.</p>
 
-        <div className="upgrade-tier-grid">
-          {TIERS.map((tier) => (
-            <div key={tier.key} className="upgrade-tier-card">
-              <div className="upgrade-tier-label">{tier.label}</div>
+        <div className="upgrade-toggle">
+          <button
+            className={mode === 'monthly' ? 'upgrade-toggle-btn active' : 'upgrade-toggle-btn'}
+            onClick={() => setMode('monthly')}
+          >
+            Monthly
+          </button>
+          <button
+            className={mode === 'payg' ? 'upgrade-toggle-btn active' : 'upgrade-toggle-btn'}
+            onClick={() => setMode('payg')}
+          >
+            Pay as you go
+          </button>
+        </div>
+
+        {mode === 'monthly' && (
+          <div className="upgrade-tier-grid">
+            {monthlyTiers.map((tier) => (
+              <div key={tier.key} className="upgrade-tier-card">
+                <div className="upgrade-tier-label">{tier.label}</div>
+                <div className="upgrade-tier-price-box">
+                  <span className="upgrade-tier-price">{formatPrice(tier.key, country)}</span>
+                  <span className="upgrade-tier-period">/ month</span>
+                </div>
+                <div className="upgrade-tier-limit">
+                  {tier.gameLimit === null ? 'Unlimited games' : `${tier.gameLimit} games / month`}
+                </div>
+                <button
+                  className="auth-btn"
+                  onClick={() => openCheckout(tier.key, tier.priceId, { tier: tier.key })}
+                  disabled={!paddle || activating}
+                >
+                  {!paddle ? 'Loading...' : pendingKey === tier.key ? 'Opening checkout...' : 'Choose Plan'}
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {mode === 'payg' && (
+          <div style={{ maxWidth: 320, margin: '0 auto' }}>
+            <div className="upgrade-tier-card upgrade-tier-card-single">
+              <div className="upgrade-tier-label">{paygTier.label}</div>
               <div className="upgrade-tier-price-box">
-                <span className="upgrade-tier-price">{formatPrice(tier.key, country)}</span>
-                <span className="upgrade-tier-period">/ month</span>
+                <span className="upgrade-tier-price">${paygTier.perGameUsd}</span>
+                <span className="upgrade-tier-period">/ game</span>
               </div>
-              <div className="upgrade-tier-limit">
-                {tier.gameLimit === null ? 'Unlimited games' : `${tier.gameLimit} games / month`}
-              </div>
+              <div className="upgrade-tier-limit">No monthly fee</div>
+              <p className="upgrade-payg-note">
+                You pay $0 today. We save your card and charge once a month, only for games that actually started.
+              </p>
               <button
                 className="auth-btn"
-                onClick={() => openCheckout(tier.key, tier.priceId, { tier: tier.key })}
+                onClick={() => openCheckout(paygTier.key, paygTier.priceId, { tier: paygTier.key })}
                 disabled={!paddle || activating}
               >
-                {!paddle ? 'Loading...' : pendingKey === tier.key ? 'Opening checkout...' : 'Choose Plan'}
+                {!paddle ? 'Loading...' : pendingKey === paygTier.key ? 'Opening checkout...' : 'Start Pay as you go'}
               </button>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
 
         {footer}
       </div>
