@@ -104,3 +104,41 @@ Decisions locked in:
 
 
 
+
+## Stage C - restructure in progress (NOT yet built, plan only)
+User feedback on current single-page /upgrade design: wants it split differently.
+NEW PLAN:
+- Fresh/trial users (never paid): see current 3-tier picker (Starter/Standard/Unlimited) - UNCHANGED.
+- Already-paid users (plan_status=paid): see a DIFFERENT view -
+  1. Top-up options (2-3 of them, not just the current 2 - consider adding a 3rd tier)
+  2. Below that, a single distinct "Upgrade to Unlimited" action - NOT the same as the
+     regular tier grid. This is a one-directional upgrade path only (no arbitrary
+     plan switching between Starter/Standard).
+  3. CRITICAL: when a user buys Unlimited via this path, the webhook must also CANCEL
+     their existing Paddle subscription (not just overwrite profiles.plan_tier) -
+     otherwise they end up paying for BOTH the old plan AND Unlimited simultaneously.
+     This needs paddle.subscriptions.cancel(oldSubscriptionId) in paddleWebhook.js,
+     using profiles.paddle_subscription_id (added in an earlier session, confirm
+     column still exists and is being populated by the webhook - NOT currently set,
+     since the top-up rewrite of paddleWebhook.js reverted to the version before the
+     customer-portal attempt which didn't save paddle_subscription_id/customer_id).
+  Whether this is a separate PAGE (/upgrade/manage or similar) or a conditional
+  section on the same /upgrade page (like the top-up section already is) - not yet
+  decided, leaning toward same page for simplicity given everything else is one page.
+
+## Bugs found this session (2026, during top-up build)
+- FIXED: Checkout button stuck on "Opening checkout..." forever after closing the
+  overlay or on any failure. Root cause: an earlier version had a checkout.closed
+  handler resetting the button state; it was dropped in the top-up rewrite. Restored,
+  now also handles checkout.error.
+- UNRESOLVED: Top-up prices ($12 and $30 one-time) show "Something went wrong" when
+  clicked, while the subscription tier prices still work fine. Root cause NOT YET
+  diagnosed - console error was requested but not yet captured. NEXT STEP: get the
+  browser console error text on click (F12 -> Console -> click a top-up button ->
+  screenshot the red error), same diagnostic method that solved the two earlier
+  Paddle checkout errors in this project (domain approval, then missing env vars).
+  Leading guesses, NOT confirmed: the top-up product/prices may be under a different
+  Paddle product than the approved one, or a tax-category issue specific to that
+  product - do not assume either without the actual console error.
+
+## UPDATE: UpgradePopup is DONE (commit 6391dae) - ignore the old 'PICK UP HERE' popup note above. Real next step: diagnose the top-up checkout error (F12 Console).
