@@ -82,7 +82,7 @@ async function handlePaddleWebhook(rawBody, signatureHeader) {
 
     const { data: existing, error: existingError } = await serviceClient
       .from("profiles")
-      .select("paddle_subscription_id")
+      .select("paddle_subscription_id, plan_tier, payg_since")
       .eq("id", userId)
       .single();
 
@@ -98,6 +98,9 @@ async function handlePaddleWebhook(rawBody, signatureHeader) {
       plan_started_at: new Date().toISOString(),
     };
     if (newSubscriptionId) updateFields.paddle_subscription_id = newSubscriptionId;
+    if (tier === "payg" && !(existing?.plan_tier === "payg" && existing?.payg_since)) {
+      updateFields.payg_since = new Date().toISOString();
+    }
 
     const { error } = await serviceClient
       .from("profiles")

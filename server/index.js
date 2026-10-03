@@ -10,6 +10,7 @@ const { createPlayer } = require("./gameLogic/models");
 const sm = require("./gameLogic/stateMachine");
 const { verifyAccountAccess, logGameCreated, markGameStarted } = require("./gameLogic/supabaseAuth");
 const { handlePaddleWebhook } = require("./gameLogic/paddleWebhook");
+const { runBilling } = require("./gameLogic/billing");
 const { DEFAULT_TIMER_SECONDS } = sm;
 
 const app = express();
@@ -25,6 +26,30 @@ app.post("/api/paddle-webhook", express.raw({ type: "application/json" }), async
   const signature = req.headers["paddle-signature"];
   const result = await handlePaddleWebhook(req.body.toString(), signature);
   res.status(result.status).send(result.ok ? "OK" : result.message);
+});
+
+// Month-end billing trigger. Called by a free external cron. Protected by a secret header.
+let billingRunning = false;
+app.post("/api/billing/run", async (req, res) => {
+  const crypto = require("crypto");
+  const secret = process.env.BILLING_SECRET;
+  const sent = req.headers["x-billing-secret"];
+  if (!secret || !sent || sent.length !== secret.length ||
+      !crypto.timingSafeEqual(Buffer.from(sent), Buffer.from(secret))) {
+    return res.status(401).send("Unauthorized");
+  }
+  if (billingRunning) return res.status(409).send("Already running");
+  billingRunning = true;
+  try {
+    const summary = await runBilling({ dryRun: req.query.dry === "1" });
+    console.log("Billing run:", JSON.stringify(summary));
+    res.json(summary);
+  } catch (err) {
+    console.error("Billing run failed:", err.message);
+    res.status(500).send("Billing failed");
+  } finally {
+    billingRunning = false;
+  }
 });
 
 const REVEAL_DURATION_MS = 10500;
