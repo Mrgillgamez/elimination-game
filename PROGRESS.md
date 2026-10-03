@@ -142,3 +142,5 @@ NEW PLAN:
   product - do not assume either without the actual console error.
 
 ## UPDATE: UpgradePopup is DONE (commit 6391dae) - ignore the old 'PICK UP HERE' popup note above. Real next step: diagnose the top-up checkout error (F12 Console).
+
+## UPDATE: Top-up bug FIXED - old sandbox price IDs did not exist. Recreated in sandbox and swapped IDs in client/src/tiers.js and server/gameLogic/tiers.js. Needs live test on Render.

@@ -6,8 +6,8 @@ const TIERS = {
 
 // One-time top-ups. Bonus games apply only for the buyer's current billing cycle.
 const TOPUPS = {
-  topup10: { priceId: "pri_01m3na12dm1v1p3pjp7scte0tk", label: "+10 games", priceUsd: 12, games: 10 },
-  topup30: { priceId: "pri_01m3na1zfyhqvn4xt8y3gz1cea", label: "+30 games", priceUsd: 30, games: 30 },
+  topup10: { priceId: "pri_01m3zjgyc0dp29r9bfz2gk08rj", label: "+10 games", priceUsd: 12, games: 10 },
+  topup30: { priceId: "pri_01m3zjh099y443n71235df4dhw", label: "+30 games", priceUsd: 30, games: 30 },
 };
 
 function getTierByPriceId(priceId) {

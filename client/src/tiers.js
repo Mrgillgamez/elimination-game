@@ -5,6 +5,6 @@ export const TIERS = [
 ];
 
 export const TOPUPS = [
-  { key: "topup10", priceId: "pri_01m3na12dm1v1p3pjp7scte0tk", label: "+10 games", priceUsd: 12 },
-  { key: "topup30", priceId: "pri_01m3na1zfyhqvn4xt8y3gz1cea", label: "+30 games", priceUsd: 30 },
+  { key: "topup10", priceId: "pri_01m3zjgyc0dp29r9bfz2gk08rj", label: "+10 games", priceUsd: 12 },
+  { key: "topup30", priceId: "pri_01m3zjh099y443n71235df4dhw", label: "+30 games", priceUsd: 30 },
 ];
