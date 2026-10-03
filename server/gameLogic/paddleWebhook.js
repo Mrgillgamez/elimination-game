@@ -74,16 +74,47 @@ async function handlePaddleWebhook(rawBody, signatureHeader) {
       console.warn(`Tier mismatch for user ${userId}: browser said ${customData.tier}, paid for ${tier}. Using paid tier.`);
     }
 
+    const newSubscriptionId = eventData.data.subscriptionId || null;
+
+    const { data: existing, error: existingError } = await serviceClient
+      .from("profiles")
+      .select("paddle_subscription_id")
+      .eq("id", userId)
+      .single();
+
+    if (existingError) {
+      console.error("Could not load profile before plan update for", userId, existingError.message);
+      return { ok: false, status: 500, message: "Profile lookup failed" };
+    }
+    const oldSubscriptionId = existing?.paddle_subscription_id || null;
+
+    const updateFields = {
+      plan_status: "paid",
+      plan_tier: tier,
+      plan_started_at: new Date().toISOString(),
+    };
+    if (newSubscriptionId) updateFields.paddle_subscription_id = newSubscriptionId;
+
     const { error } = await serviceClient
       .from("profiles")
-      .update({ plan_status: "paid", plan_tier: tier, plan_started_at: new Date().toISOString() })
+      .update(updateFields)
       .eq("id", userId);
 
     if (error) {
       console.error("Failed to update profile after payment:", error.message);
       return { ok: false, status: 500, message: "Database update failed" };
     }
-    console.log(`Payment confirmed for user ${userId}, tier: ${tier}`);
+    console.log(`Payment confirmed for user ${userId}, tier: ${tier}, subscription: ${newSubscriptionId}`);
+
+    // A different, new subscription was bought: stop the old one at the end of its paid period.
+    if (newSubscriptionId && oldSubscriptionId && oldSubscriptionId !== newSubscriptionId) {
+      try {
+        await paddle.subscriptions.cancel(oldSubscriptionId, { effectiveFrom: "next_billing_period" });
+        console.log(`Old subscription ${oldSubscriptionId} scheduled to cancel at period end for user ${userId}`);
+      } catch (err) {
+        console.error(`MANUAL ACTION NEEDED: could not cancel old subscription ${oldSubscriptionId} for user ${userId}: ${err.message}`);
+      }
+    }
   }
 
   return { ok: true, status: 200 };
