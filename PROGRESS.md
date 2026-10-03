@@ -161,3 +161,23 @@ Known small issues: logged-out Choose Plan does nothing; C1 refresh-host re-test
 PREFERENCE: progress notes = file only, no git push.
 
 ## UPDATE (2026-10-03): Old-subscription cancel CONFIRMED in sandbox after enabling Subscriptions Write on the API key. Log: "Old subscription sub_... scheduled to cancel at period end". Backend for Upgrade-to-Unlimited is DONE. Remaining: paid-user /upgrade page UI, C7, C8, C9, Paddle live verification. Reminder: enable Subscriptions Write on the LIVE key too.
+
+## STOPPING POINT (2026-10-03) - 98% complete
+DONE TODAY: UpgradePopup confirmed, top-up price IDs fixed, top-ups proven, webhook saves paddle_subscription_id, old-subscription cancel proven, paid-user /upgrade page built and pushed (Unlimited view + trial 3-plan view confirmed live).
+NOT YET TESTED: the Starter/Standard paid view (top-ups + Upgrade to Unlimited card). Needs a paid Starter or Standard test account.
+NEXT (in order): 1) test Starter/Standard view  2) C7 localized pricing  3) C8 pay-as-you-go  4) C9 trust/UX pass  5) Paddle live verification, then swap sandbox values for live (incl. Subscriptions Write on live API key).
+Small issues: logged-out Choose Plan does nothing; C1 refresh-host re-test pending; rotate live Paddle key once pasted in chat.
+
+## UPDATE (2026-10-03): Paid-user /upgrade page FULLY CONFIRMED live (Unlimited view, trial 3-plan view, Starter/Standard view with top-ups + single Upgrade to Unlimited card; checkout opens). Next: C7 localized pricing. Minor polish for C9: tighten spacing between the Unlimited card and the feature list on the paid view.
+
+## C7 APPROVED PRICE TABLE (tax-inclusive, set in Paddle sandbox first, then mirrored in code)
+Plan       | USD | India INR | UK GBP | Europe EUR | Australia AUD | Canada CAD
+Starter    | 15  | 999       | 11     | 14         | 22            | 20
+Standard   | 25  | 1699      | 19     | 23         | 38            | 34
+Unlimited  | 55  | 3999      | 42     | 50         | 85            | 75
++10 games  | 12  | 799       | 9      | 11         | 18            | 16
++30 games  | 30  | 1999      | 23     | 28         | 45            | 41
+Europe EUR = Germany, France, Italy, Spain, Netherlands, Ireland. Everyone else = USD.
+C7 STATUS: Paddle sandbox overrides NOT yet added (0 of 5 prices done).
+
+## UPDATE (2026-10-03): C7 Paddle sandbox side DONE - all 5 prices have 10 local prices each (see approved table above). 0 active currency conversions, so countries outside the table are charged the USD base price. NEXT: mirror the table in code (client display by profiles.country, prefill country into Paddle checkout).
