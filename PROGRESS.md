@@ -144,3 +144,5 @@ NEW PLAN:
 ## UPDATE: UpgradePopup is DONE (commit 6391dae) - ignore the old 'PICK UP HERE' popup note above. Real next step: diagnose the top-up checkout error (F12 Console).
 
 ## UPDATE: Top-up bug FIXED - old sandbox price IDs did not exist. Recreated in sandbox and swapped IDs in client/src/tiers.js and server/gameLogic/tiers.js. Needs live test on Render.
+
+## UPDATE: Top-ups CONFIRMED end-to-end in sandbox (bonus_games 10 -> 20 after second payment). Next: paid-user /upgrade restructure (top-ups + Upgrade to Unlimited that cancels old subscription).
