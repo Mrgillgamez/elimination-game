@@ -62,6 +62,7 @@ function UpgradePage() {
     setPendingKey(key);
     const customer = { email: userEmail };
     if (country) customer.address = { countryCode: country };
+    if (country === 'US') customer.address.postalCode = '10001'; // TEMP TEST
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       customer,
