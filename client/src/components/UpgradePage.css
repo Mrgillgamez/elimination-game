@@ -175,3 +175,12 @@
 .upgrade-card-wide > div[style] + .upgrade-feature-list {
   margin-top: var(--space-6, 32px);
 }
+
+.upgrade-card-wide > .upgrade-tier-grid:has(> .upgrade-tier-card:nth-child(2):last-child) {
+  display: flex;
+  justify-content: center;
+}
+
+.upgrade-card-wide > .upgrade-tier-grid:has(> .upgrade-tier-card:nth-child(2):last-child) > .upgrade-tier-card {
+  flex: 0 1 260px;
+}
