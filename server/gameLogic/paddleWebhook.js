@@ -2,6 +2,7 @@ const { Paddle, Environment } = require("@paddle/paddle-node-sdk");
 const { createClient } = require("@supabase/supabase-js");
 const { getTierByPriceId, getTopupByPriceId, isPaygGamePrice, TOPUPS } = require("./tiers");
 const { currentCycleStart } = require("./supabaseAuth");
+const { billLeavingUser } = require("./billing");
 
 const paddleEnv = process.env.PADDLE_ENV === "production" ? Environment.production : Environment.sandbox;
 const paddle = new Paddle(process.env.PADDLE_API_KEY, { environment: paddleEnv });
@@ -112,6 +113,16 @@ async function handlePaddleWebhook(rawBody, signatureHeader) {
       return { ok: false, status: 500, message: "Database update failed" };
     }
     console.log(`Payment confirmed for user ${userId}, tier: ${tier}, subscription: ${newSubscriptionId}`);
+
+    // Leaving pay-as-you-go: bill their unbilled games on the old subscription first.
+    if (existing?.plan_tier === "payg" && tier !== "payg" && oldSubscriptionId && existing?.payg_since) {
+      try {
+        const n = await billLeavingUser(userId, oldSubscriptionId, existing.payg_since);
+        console.log(`Leaving payg: billed ${n} game(s) for user ${userId}`);
+      } catch (err) {
+        console.error(`MANUAL ACTION NEEDED: could not bill leaving payg user ${userId}: ${err.message}`);
+      }
+    }
 
     // A different, new subscription was bought: stop the old one at the end of its paid period.
     if (newSubscriptionId && oldSubscriptionId && oldSubscriptionId !== newSubscriptionId) {

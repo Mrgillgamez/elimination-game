@@ -77,4 +77,42 @@ async function runBilling({ dryRun }) {
   return summary;
 }
 
-module.exports = { runBilling };
+// Used when a pay-as-you-go user switches to another plan: bill their unbilled games now.
+async function billLeavingUser(userId, subscriptionId, paygSince) {
+  const { data: games, error } = await db
+    .from("game_creations")
+    .select("id")
+    .eq("user_id", userId)
+    .eq("started", true)
+    .is("billed_at", null)
+    .gte("created_at", paygSince);
+  if (error) throw new Error("Could not load games: " + error.message);
+  if (!games || games.length === 0) return 0;
+
+  let billed = 0;
+  for (let i = 0; i < games.length; i += BATCH_SIZE) {
+    const ids = games.slice(i, i + BATCH_SIZE).map((g) => g.id);
+    const { data: claimed, error: claimError } = await db
+      .from("game_creations")
+      .update({ billed_at: new Date().toISOString() })
+      .in("id", ids)
+      .is("billed_at", null)
+      .select("id");
+    if (claimError || !claimed || claimed.length === 0) continue;
+    const claimedIds = claimed.map((c) => c.id);
+    try {
+      await paddle.subscriptions.createOneTimeCharge(subscriptionId, {
+        effectiveFrom: "immediately",
+        items: [{ priceId: PAYG_GAME_PRICE_ID, quantity: claimedIds.length }],
+      });
+      billed += claimedIds.length;
+      console.log(`Billing (leaving payg): charged ${claimedIds.length} game(s) for user ${userId}`);
+    } catch (err) {
+      await db.from("game_creations").update({ billed_at: null }).in("id", claimedIds);
+      throw err;
+    }
+  }
+  return billed;
+}
+
+module.exports = { runBilling, billLeavingUser };
