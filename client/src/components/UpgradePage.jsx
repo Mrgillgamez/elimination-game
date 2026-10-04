@@ -6,6 +6,8 @@ import { formatPrice } from '../pricing';
 import './AuthPage.css';
 import './UpgradePage.css';
 
+const PAYG_GAME_PRICE_ID = 'pri_01m40ehjr1tppk1kw93xh6bf3h';
+
 function UpgradePage() {
   const [paddle, setPaddle] = useState(null);
   const [userEmail, setUserEmail] = useState(null);
@@ -58,7 +60,8 @@ function UpgradePage() {
     if (!paddle) return;
     const items = [...TIERS, ...TOPUPS]
       .filter((i) => !i.usageBased)
-      .map((i) => ({ priceId: i.priceId, quantity: 1 }));
+      .map((i) => ({ priceId: i.priceId, quantity: 1 }))
+      .concat([{ priceId: PAYG_GAME_PRICE_ID, quantity: 1 }]);
     paddle.PricePreview({ items })
       .then((result) => {
         console.log('PricePreview result', result);
@@ -272,7 +275,7 @@ function UpgradePage() {
             <div className="upgrade-tier-card upgrade-tier-card-single">
               <div className="upgrade-tier-label">{paygTier.label}</div>
               <div className="upgrade-tier-price-box">
-                <span className="upgrade-tier-price">${paygTier.perGameUsd}</span>
+                <span className="upgrade-tier-price">{livePrices[PAYG_GAME_PRICE_ID] || `$${paygTier.perGameUsd}`}</span>
                 <span className="upgrade-tier-period">/ game</span>
               </div>
               <div className="upgrade-tier-limit">No monthly fee</div>
