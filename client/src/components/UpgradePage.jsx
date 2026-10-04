@@ -135,7 +135,7 @@ function UpgradePage() {
         <div className="auth-card upgrade-card upgrade-card-wide">
           <h1>You're on Pay as you go</h1>
           <p className="auth-subnote">
-            Host as many games as you like. You pay $2 per game that actually starts, charged once a month.
+            Host as many games as you like. You pay $2 per game that actually starts, charged once a month, in USD.
           </p>
           <button
             className="auth-btn"
@@ -275,12 +275,12 @@ function UpgradePage() {
             <div className="upgrade-tier-card upgrade-tier-card-single">
               <div className="upgrade-tier-label">{paygTier.label}</div>
               <div className="upgrade-tier-price-box">
-                <span className="upgrade-tier-price">{livePrices[PAYG_GAME_PRICE_ID] || `$${paygTier.perGameUsd}`}</span>
+                <span className="upgrade-tier-price">${paygTier.perGameUsd}</span>
                 <span className="upgrade-tier-period">/ game</span>
               </div>
               <div className="upgrade-tier-limit">No monthly fee</div>
               <p className="upgrade-payg-note">
-                You pay $0 today. We save your card and charge once a month, only for games that actually started.
+                You pay $0 today. We save your card and charge once a month, only for games that actually started. All pay-as-you-go charges are in USD.
               </p>
               <button
                 className="auth-btn"
