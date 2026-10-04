@@ -17,6 +17,7 @@ function UpgradePage() {
   const [country, setCountry] = useState(null);
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [mode, setMode] = useState('monthly');
+  const [livePrices, setLivePrices] = useState({});
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -53,6 +54,25 @@ function UpgradePage() {
     }).then((paddleInstance) => setPaddle(paddleInstance));
   }, []);
 
+  useEffect(() => {
+    if (!paddle) return;
+    const items = [...TIERS, ...TOPUPS]
+      .filter((i) => !i.usageBased)
+      .map((i) => ({ priceId: i.priceId, quantity: 1 }));
+    paddle.PricePreview({ items })
+      .then((result) => {
+        console.log('PricePreview result', result);
+        const map = {};
+        result.data.details.lineItems.forEach((li) => {
+          map[li.price.id] = li.formattedTotals.total;
+        });
+        setLivePrices(map);
+      })
+      .catch((err) => console.error('PricePreview failed', err));
+  }, [paddle]);
+
+  const priceText = (item) => livePrices[item.priceId] || formatPrice(item.key, country);
+
   const openCheckout = (key, priceId, extraCustomData) => {
     if (!userId) {
       window.location.href = '/signup';
@@ -61,8 +81,6 @@ function UpgradePage() {
     if (!paddle) return;
     setPendingKey(key);
     const customer = { email: userEmail };
-    if (country) customer.address = { countryCode: country };
-    if (country === 'US') customer.address.postalCode = '10001'; // TEMP TEST
     paddle.Checkout.open({
       items: [{ priceId, quantity: 1 }],
       customer,
@@ -162,7 +180,7 @@ function UpgradePage() {
               <div key={topup.key} className="upgrade-tier-card">
                 <div className="upgrade-tier-label">{topup.label}</div>
                 <div className="upgrade-tier-price-box">
-                  <span className="upgrade-tier-price">{formatPrice(topup.key, country)}</span>
+                  <span className="upgrade-tier-price">{priceText(topup)}</span>
                 </div>
                 <div className="upgrade-tier-limit">one-time, this cycle only</div>
                 <button
@@ -184,7 +202,7 @@ function UpgradePage() {
             <div className="upgrade-tier-card">
               <div className="upgrade-tier-label">{unlimitedTier.label}</div>
               <div className="upgrade-tier-price-box">
-                <span className="upgrade-tier-price">{formatPrice(unlimitedTier.key, country)}</span>
+                <span className="upgrade-tier-price">{priceText(unlimitedTier)}</span>
                 <span className="upgrade-tier-period">/ month</span>
               </div>
               <div className="upgrade-tier-limit">Unlimited games</div>
@@ -231,7 +249,7 @@ function UpgradePage() {
               <div key={tier.key} className="upgrade-tier-card">
                 <div className="upgrade-tier-label">{tier.label}</div>
                 <div className="upgrade-tier-price-box">
-                  <span className="upgrade-tier-price">{formatPrice(tier.key, country)}</span>
+                  <span className="upgrade-tier-price">{priceText(tier)}</span>
                   <span className="upgrade-tier-period">/ month</span>
                 </div>
                 <div className="upgrade-tier-limit">
