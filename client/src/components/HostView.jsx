@@ -33,6 +33,8 @@ function HostView() {
 
   const [createGameError, setCreateGameError] = useState(null); // { message, reason } | null
 
+  const [rejoining, setRejoining] = useState(!!sessionStorage.getItem('hostRoomCode'));
+
   const revealTimeoutRef = useRef(null);
   const rosterRef = useRef({});
   const activeSoundRef = useRef(null);
@@ -42,9 +44,11 @@ function HostView() {
     socket.on('ROOM_CREATED', ({ roomCode }) => {
       setRoomCode(roomCode);
       setCreateGameError(null);
+      setRejoining(false);
       sessionStorage.setItem('hostRoomCode', roomCode);
     });
     socket.on('JOIN_ERROR', ({ message, reason }) => {
+      setRejoining(false);
       setCreateGameError({ message: message || 'Something went wrong. Please try again.', reason });
     });
     socket.on('LOBBY_UPDATED', ({ players, canStart }) => {
@@ -105,6 +109,7 @@ function HostView() {
 
     const savedRoomCode = sessionStorage.getItem('hostRoomCode');
     if (savedRoomCode) {
+      setTimeout(() => setRejoining(false), 10000);
       supabase.auth.getSession().then(({ data: { session } }) => {
         socket.emit('HOST_REJOIN', { roomCode: savedRoomCode, accessToken: session?.access_token });
       });
@@ -166,6 +171,10 @@ function HostView() {
   if (!allowed) {
     window.location.href = reason === 'TRIAL_EXPIRED' ? '/upgrade' : '/login';
     return null;
+  }
+
+  if (!roomCode && rejoining) {
+    return <div style={{ padding: 40, color: '#fff', background: '#0b0b0f', minHeight: '100vh' }}>Reconnecting to your game...</div>;
   }
 
   if (!roomCode) {
