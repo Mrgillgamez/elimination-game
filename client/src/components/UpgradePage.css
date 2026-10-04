@@ -171,3 +171,7 @@
   font-size: 0.85rem;
   color: var(--ink-muted);
 }
+
+.upgrade-card-wide > div[style] + .upgrade-feature-list {
+  margin-top: var(--space-6, 32px);
+}
