@@ -54,7 +54,11 @@ function UpgradePage() {
   }, []);
 
   const openCheckout = (key, priceId, extraCustomData) => {
-    if (!paddle || !userId) return;
+    if (!userId) {
+      window.location.href = '/signup';
+      return;
+    }
+    if (!paddle) return;
     setPendingKey(key);
     const customer = { email: userEmail };
     if (country) customer.address = { countryCode: country };
@@ -81,8 +85,11 @@ function UpgradePage() {
       <ul className="upgrade-feature-list">
         <li>Up to 15 players per game</li>
         <li>All reveal drama, sounds, and effects</li>
-        <li>Cancel anytime</li>
+        <li>Cancel monthly plans anytime</li>
+        <li>Pay as you go: billed once a month, only for games that started</li>
       </ul>
+
+      <p className="upgrade-secure-note">&#128274; Secure checkout by Paddle. We never see your card.</p>
 
       <p className="auth-switch">
         Questions? <a href="mailto:iamsharann1@gmail.com">Contact support</a>
