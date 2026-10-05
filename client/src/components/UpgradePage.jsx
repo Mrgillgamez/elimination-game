@@ -144,6 +144,33 @@ function UpgradePage() {
           >
             Back to hosting
           </button>
+
+          <h2 className="upgrade-topup-heading">Prefer a monthly plan?</h2>
+          <p className="auth-subnote">
+            Switching bills your unpaid games first. Your new plan then starts today and Pay as you go stops.
+          </p>
+          <div className="upgrade-tier-grid">
+            {monthlyTiers.map((tier) => (
+              <div key={tier.key} className="upgrade-tier-card">
+                <div className="upgrade-tier-label">{tier.label}</div>
+                <div className="upgrade-tier-price-box">
+                  <span className="upgrade-tier-price">{priceText(tier)}</span>
+                  <span className="upgrade-tier-period">/ month</span>
+                </div>
+                <div className="upgrade-tier-limit">
+                  {tier.gameLimit === null ? 'Unlimited games' : `${tier.gameLimit} games / month`}
+                </div>
+                <button
+                  className="auth-btn"
+                  onClick={() => openCheckout(tier.key, tier.priceId, { tier: tier.key })}
+                  disabled={!paddle || activating}
+                >
+                  {!paddle ? 'Loading...' : pendingKey === tier.key ? 'Opening checkout...' : 'Switch to this plan'}
+                </button>
+              </div>
+            ))}
+          </div>
+
           {footer}
         </div>
       </div>
