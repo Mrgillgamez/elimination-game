@@ -10,8 +10,10 @@ function HostTopBar() {
   return (
     <div className="host-topbar">
       <div className="host-topbar-links">
+        <a href="/upgrade">Plan &amp; billing</a>
         <a href="/terms">Terms</a>
         <a href="/privacy">Privacy</a>
+        <a href="/refund">Refund</a>
       </div>
       <button className="host-topbar-logout" onClick={handleLogout}>Log out</button>
     </div>
