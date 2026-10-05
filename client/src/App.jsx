@@ -1,6 +1,7 @@
 import LandingPage from './components/LandingPage';
 import TermsPage from './components/TermsPage';
 import PrivacyPage from './components/PrivacyPage';
+import RefundPage from './components/RefundPage';
 import SignupPage from './components/SignupPage';
 import LoginPage from './components/LoginPage';
 import UpgradePage from './components/UpgradePage';
@@ -13,6 +14,7 @@ function App() {
   if (path === '/') return <LandingPage />;
   if (path === '/terms') return <TermsPage />;
   if (path === '/privacy') return <PrivacyPage />;
+  if (path === '/refund') return <RefundPage />;
   if (path === '/signup') return <SignupPage />;
   if (path === '/login') return <LoginPage />;
   if (path === '/upgrade') return <UpgradePage />;

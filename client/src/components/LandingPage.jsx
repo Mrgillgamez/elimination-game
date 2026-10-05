@@ -39,6 +39,10 @@ function LandingPage() {
         <a href="/terms">Terms of Service</a>
         <span className="landing-footer-divider">.</span>
         <a href="/privacy">Privacy Policy</a>
+        <span className="landing-footer-divider">.</span>
+        <a href="/refund">Refund Policy</a>
+        <span className="landing-footer-divider">.</span>
+        <a href="mailto:iamsharann1@gmail.com">Contact</a>
       </footer>
     </div>
   );
