@@ -11,6 +11,7 @@ const sm = require("./gameLogic/stateMachine");
 const { verifyAccountAccess, logGameCreated, markGameStarted } = require("./gameLogic/supabaseAuth");
 const { handlePaddleWebhook } = require("./gameLogic/paddleWebhook");
 const { runBilling } = require("./gameLogic/billing");
+const { cancelSubscription } = require("./gameLogic/cancel");
 const { DEFAULT_TIMER_SECONDS } = sm;
 
 const app = express();
@@ -49,6 +50,19 @@ app.post("/api/billing/run", async (req, res) => {
     res.status(500).send("Billing failed");
   } finally {
     billingRunning = false;
+  }
+});
+
+// Cancel the logged-in user's subscription (needs their Supabase access token).
+app.post("/api/cancel-subscription", async (req, res) => {
+  const auth = req.headers.authorization || "";
+  const token = auth.startsWith("Bearer ") ? auth.slice(7) : null;
+  try {
+    const result = await cancelSubscription(token);
+    res.status(result.status).json(result.body);
+  } catch (err) {
+    console.error("Cancel route failed:", err.message);
+    res.status(500).json({ message: "Something went wrong. Please try again." });
   }
 });
 

@@ -20,6 +20,9 @@ function UpgradePage() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [mode, setMode] = useState('monthly');
   const [livePrices, setLivePrices] = useState({});
+  const [cancelEndsAt, setCancelEndsAt] = useState(null);
+  const [showCancel, setShowCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
@@ -32,12 +35,13 @@ function UpgradePage() {
 
       const { data: profile } = await supabase
         .from('profiles')
-        .select('plan_status, plan_tier, country')
+        .select('plan_status, plan_tier, country, cancel_effective_at')
         .eq('id', session.user.id)
         .single();
 
       if (profile?.plan_status === 'paid') setCurrentTierKey(profile.plan_tier);
       if (profile?.country) setCountry(profile.country);
+      if (profile?.cancel_effective_at) setCancelEndsAt(profile.cancel_effective_at);
       setProfileLoaded(true);
     });
 
@@ -99,6 +103,58 @@ function UpgradePage() {
   const paygTier = TIERS.find((t) => t.key === 'payg');
   const monthlyTiers = TIERS.filter((t) => !t.usageBased);
 
+  const handleCancel = async () => {
+    setCancelling(true);
+    setError('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/cancel-subscription', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(body.message || 'Something went wrong. Please try again.');
+        setCancelling(false);
+        setShowCancel(false);
+        return;
+      }
+      if (body.endsNow) {
+        window.location.href = '/upgrade';
+        return;
+      }
+      setCancelEndsAt(body.effectiveAt || new Date().toISOString());
+      setShowCancel(false);
+    } catch (e) {
+      setError('Something went wrong. Please try again.');
+    }
+    setCancelling(false);
+  };
+
+  const cancelSection = isPaid && (
+    <div className="upgrade-cancel">
+      {cancelEndsAt ? (
+        <p className="upgrade-cancel-note">
+          Your plan is set to end on {new Date(cancelEndsAt).toLocaleDateString()}. You keep full access until then.
+        </p>
+      ) : showCancel ? (
+        <div className="upgrade-cancel-box">
+          <p className="upgrade-cancel-note">
+            {isPayg
+              ? "We'll add up your unpaid games, charge them now, and end Pay as you go today."
+              : 'Your plan stops renewing. You keep full access until the end of the period you already paid for.'}
+          </p>
+          <div className="upgrade-cancel-actions">
+            <button className="upgrade-cancel-keep" onClick={() => setShowCancel(false)} disabled={cancelling}>Keep my plan</button>
+            <button className="upgrade-cancel-confirm" onClick={handleCancel} disabled={cancelling}>{cancelling ? 'Cancelling...' : 'Yes, cancel'}</button>
+          </div>
+        </div>
+      ) : (
+        <button className="upgrade-cancel-link" onClick={() => setShowCancel(true)}>Cancel subscription</button>
+      )}
+    </div>
+  );
+
   const footer = (
     <>
       {activating && <p className="auth-subnote">Payment received. Redirecting you back...</p>}
@@ -112,6 +168,8 @@ function UpgradePage() {
       </ul>
 
       <p className="upgrade-secure-note">&#128274; Secure checkout by Paddle. We never see your card.</p>
+
+      {cancelSection}
 
       <p className="auth-switch">
         Questions? <a href="mailto:iamsharann1@gmail.com">Contact support</a>

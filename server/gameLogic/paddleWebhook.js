@@ -97,6 +97,7 @@ async function handlePaddleWebhook(rawBody, signatureHeader) {
       plan_status: "paid",
       plan_tier: tier,
       plan_started_at: new Date().toISOString(),
+      cancel_effective_at: null,
     };
     if (newSubscriptionId) updateFields.paddle_subscription_id = newSubscriptionId;
     if (tier === "payg" && !(existing?.plan_tier === "payg" && existing?.payg_since)) {
@@ -135,6 +136,24 @@ async function handlePaddleWebhook(rawBody, signatureHeader) {
     }
   }
 
+  if (eventData.eventType === "subscription.canceled") {
+    const endedSubId = eventData.data.id;
+    const { data: rows, error: endError } = await serviceClient
+      .from("profiles")
+      .update({ plan_status: "cancelled", cancel_effective_at: null })
+      .eq("paddle_subscription_id", endedSubId)
+      .select("id");
+    if (endError) {
+      console.error("Failed to apply subscription end:", endError.message);
+      return { ok: false, status: 500, message: "Database update failed" };
+    }
+    if (rows && rows.length > 0) {
+      console.log(`Subscription ${endedSubId} ended; user ${rows[0].id} set to cancelled`);
+    } else {
+      console.log(`Subscription ${endedSubId} ended; no matching profile (plan was already replaced)`);
+    }
+    return { ok: true, status: 200 };
+  }
   return { ok: true, status: 200 };
 }
 
