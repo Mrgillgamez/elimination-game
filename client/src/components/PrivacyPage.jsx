@@ -6,11 +6,10 @@ function PrivacyPage() {
       <div className="legal-content">
         <a href="/" className="legal-back">&larr; Back home</a>
         <h1>Privacy Policy</h1>
-        <p className="legal-updated">Last updated: October 5, 2026</p>
+        <p className="legal-updated">Last updated: October 6, 2026</p>
 
         <p>
-          This Privacy Policy explains how Love Preet ("we," "us"), operating The
-          Elimination Game, collects, uses, and protects information when you use
+          This Privacy Policy explains how Love Preet ("we," "us"), operating Play Minus One, collects, uses, and protects information when you use
           the Service.
         </p>
 

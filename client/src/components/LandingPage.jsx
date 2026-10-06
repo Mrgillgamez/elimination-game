@@ -25,7 +25,7 @@ function LandingPage() {
   return (
     <div className="landing-container">
       <div className="landing-hero">
-        <h1 className="landing-title">The Elimination Game</h1>
+        <h1 className="landing-title">Play Minus One</h1>
         <p className="landing-tagline">
           The suspenseful, real-time party game for 10-15 players. One host screen.
           Everyone else on their phone. Someone gets voted out every round.

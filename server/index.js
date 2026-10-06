@@ -20,7 +20,7 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
 app.use(express.static(path.join(__dirname, "../client/dist")));
-app.get("/api/health", (req, res) => res.send("Elimination Game server is running."));
+app.get("/api/health", (req, res) => res.send("Play Minus One server is running."));
 
 // Raw body ONLY for this route - Paddle signature verification needs untouched bytes
 app.post("/api/paddle-webhook", express.raw({ type: "application/json" }), async (req, res) => {

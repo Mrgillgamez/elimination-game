@@ -6,19 +6,19 @@ function TermsPage() {
       <div className="legal-content">
         <a href="/" className="legal-back">&larr; Back home</a>
         <h1>Terms of Service</h1>
-        <p className="legal-updated">Last updated: October 5, 2026</p>
+        <p className="legal-updated">Last updated: October 6, 2026</p>
 
         <p>
           These Terms of Service ("Terms") are a legal agreement between you and
           Love Preet, operating as an individual ("we," "us"), governing your
-          access to and use of The Elimination Game (the "Service"). By creating
+          access to and use of Play Minus One (the "Service"). By creating
           an account or using the Service, you agree to these Terms. If you do
           not agree, do not use the Service.
         </p>
 
         <h2>1. What the Service Is</h2>
         <p>
-          The Elimination Game is a real-time, browser-based party game for
+          Play Minus One is a real-time, browser-based party game for
           in-person groups of 10 to 15 players plus one host. The host runs a
           game from a shared screen. Players join from their own devices using a
           room code.

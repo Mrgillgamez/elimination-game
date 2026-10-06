@@ -6,10 +6,10 @@ function RefundPage() {
       <div className="legal-content">
         <a href="/" className="legal-back">&larr; Back home</a>
         <h1>Refund Policy</h1>
-        <p className="legal-updated">Last updated: October 5, 2026</p>
+        <p className="legal-updated">Last updated: October 6, 2026</p>
 
         <p>
-          We want you to be happy with The Elimination Game. This policy explains
+          We want you to be happy with Play Minus One. This policy explains
           when you can get a refund. Payments are processed by Paddle.com Market
           Limited ("Paddle"), the Merchant of Record, and refunds are issued
           through Paddle.
