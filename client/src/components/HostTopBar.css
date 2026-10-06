@@ -36,3 +36,43 @@
   border-color: var(--victory);
   color: var(--victory);
 }
+
+/* Phone-friendly top bar */
+.host-topbar-links {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+
+.host-topbar-links::-webkit-scrollbar { display: none; }
+
+.host-topbar-links a {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.host-topbar-logout {
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-left: var(--space-3);
+}
+
+@media (max-width: 520px) {
+  .host-topbar {
+    padding: var(--space-3);
+    font-size: 0.75rem;
+  }
+
+  .host-topbar-links a {
+    margin-right: var(--space-3);
+    font-size: 0.75rem;
+  }
+
+  .host-topbar-logout {
+    padding: 6px 10px;
+    font-size: 0.75rem;
+  }
+}
