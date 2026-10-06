@@ -10,7 +10,7 @@ function TermsPage() {
 
         <p>
           These Terms of Service ("Terms") are a legal agreement between you and
-          Love Preet, operating as an individual ("we," "us"), governing your
+          Lovepreet, operating as an individual ("we," "us"), governing your
           access to and use of Play Minus One (the "Service"). By creating
           an account or using the Service, you agree to these Terms. If you do
           not agree, do not use the Service.
@@ -124,7 +124,7 @@ function TermsPage() {
         <h2>11. Intellectual Property</h2>
         <p>
           The Service, including its software, design, and branding, is owned by
-          Love Preet. You are granted a limited, non-exclusive, non-transferable
+          Lovepreet. You are granted a limited, non-exclusive, non-transferable
           license to use the Service for its intended purpose. You may not copy,
           modify, or redistribute the Service.
         </p>

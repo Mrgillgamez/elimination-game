@@ -9,7 +9,7 @@ function PrivacyPage() {
         <p className="legal-updated">Last updated: October 6, 2026</p>
 
         <p>
-          This Privacy Policy explains how Love Preet ("we," "us"), operating Play Minus One, collects, uses, and protects information when you use
+          This Privacy Policy explains how Lovepreet ("we," "us"), operating Play Minus One, collects, uses, and protects information when you use
           the Service.
         </p>
 
